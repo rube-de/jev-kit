@@ -745,8 +745,11 @@ class TestASymlinkOutOfHomeIsWindowsGround(unittest.TestCase):
         import tempfile
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.link = os.path.join(self.tmp.name, "vault")
-        self.target = os.path.join(self.tmp.name, "mnt_c_target")
+        # Resolved, because the temp dir can itself sit behind a symlink
+        # (/var -> /private/var on macOS) and only the vault link is under test.
+        tmp = os.path.realpath(self.tmp.name)
+        self.link = os.path.join(tmp, "vault")
+        self.target = os.path.join(tmp, "mnt_c_target")
         os.makedirs(self.target)
         os.symlink(self.target, self.link)
 
