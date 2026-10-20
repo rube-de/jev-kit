@@ -23,6 +23,10 @@
 # does not touch a systemd unit, and does not stop or start anything.
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/portable.sh"
+
 DRY_RUN=0
 case "${1:-}" in
   --dry-run) DRY_RUN=1 ;;
@@ -114,7 +118,7 @@ migrate_slot() {
   fi
 
   mkdir -p "$(dirname "$new")"
-  if ! mv -T "$src" "$new"; then
+  if ! airlock_rename "$src" "$new"; then
     say "  $label: mv failed for $src" >&2
     status=1
     return 0

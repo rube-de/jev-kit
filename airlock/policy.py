@@ -851,10 +851,15 @@ def root_is_plocate_covered(root, home=None, db_kind=None):
     if kind == "system":
         return True
     try:
-        base = os.path.normpath(home or os.path.expanduser("~"))
+        home = home or os.path.expanduser("~")
+        # Roots arrive through resolve_root, so compare them with the
+        # resolved home too. Where $HOME sits behind a symlink (/home on
+        # macOS, or a /home moved to another disk) the two spellings never
+        # match, and a search of $HOME read as ground the index lacks.
+        bases = {os.path.normpath(home), resolve_root(home)}
     except Exception:
         return False
-    return r == base or r.startswith(base.rstrip("/") + "/")
+    return any(r == b or r.startswith(b.rstrip("/") + "/") for b in bases)
 
 
 def any_root_is_plocate_covered(roots, home=None, db_kind=None):

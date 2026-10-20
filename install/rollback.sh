@@ -5,6 +5,10 @@
 # effect on the next tool call / daemon restart without any further edits.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/portable.sh"
+
 AIRLOCK_HOME="${AIRLOCK_HOME:-$HOME/.local/share/airlock}"
 RELEASES_DIR="$AIRLOCK_HOME/releases"
 CURRENT_LINK="$AIRLOCK_HOME/current"
@@ -21,7 +25,10 @@ if [ -z "$CURRENT_REAL" ]; then
 fi
 CURRENT_NAME="$(basename "$CURRENT_REAL")"
 
-mapfile -t ALL_RELEASES < <(ls -1t "$RELEASES_DIR" 2>/dev/null | grep -v '^\.export-')
+# A read loop rather than mapfile, which bash 3.2 (macOS) does not have.
+ALL_RELEASES=()
+while IFS= read -r name; do ALL_RELEASES+=("$name"); done \
+  < <(ls -1t "$RELEASES_DIR" 2>/dev/null | grep -v '^\.export-')
 
 PREVIOUS=""
 for i in "${!ALL_RELEASES[@]}"; do
@@ -38,7 +45,7 @@ fi
 
 TMP_LINK="$AIRLOCK_HOME/.current.tmp.$$"
 ln -sfn "$RELEASES_DIR/$PREVIOUS" "$TMP_LINK"
-mv -T "$TMP_LINK" "$CURRENT_LINK"
+airlock_rename "$TMP_LINK" "$CURRENT_LINK"
 
 echo "rollback.sh: current $CURRENT_NAME -> $PREVIOUS"
 echo "current -> $(readlink -f "$CURRENT_LINK")"

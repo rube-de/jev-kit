@@ -19,13 +19,17 @@
 # ~/.config/airlock/env is still honoured ahead of the pointer file, so an
 # existing install keeps working with no action.
 
+# For airlock_owner_mode: GNU and BSD stat take different flags.
+# shellcheck disable=SC1091
+. "$(dirname "${BASH_SOURCE[0]}")/portable.sh"
+
 # Is $1 a regular file (not a symlink), owned by us, and not group- or
 # world-writable? Silent; the caller decides what to say.
 airlock_keyfile_trusted_file() {
   local p="$1" info uid mode
   [ -f "$p" ] || return 1
   [ -L "$p" ] && return 1
-  info="$(stat -c '%u %a' "$p" 2>/dev/null)" || return 1
+  info="$(airlock_owner_mode "$p")" || return 1
   uid="${info%% *}"
   mode="${info##* }"
   [ "$uid" = "$(id -u)" ] || return 1
@@ -40,7 +44,7 @@ airlock_keyfile_trusted_file() {
 airlock_keyfile_trusted_dir() {
   local p="$1" info uid mode
   [ -d "$p" ] || return 1
-  info="$(stat -c '%u %a' "$p" 2>/dev/null)" || return 1
+  info="$(airlock_owner_mode "$p")" || return 1
   uid="${info%% *}"
   mode="${info##* }"
   [ "$uid" = "$(id -u)" ] || return 1

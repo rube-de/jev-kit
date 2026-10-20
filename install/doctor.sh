@@ -18,6 +18,8 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/portable.sh"
 
 if [ -f "$SCRIPT_DIR/config.env" ]; then
   set -a
@@ -356,7 +358,7 @@ head_ "Health check"
 if [ ! -f "$LIVE/airlock/health.py" ]; then
   skip "no health module in the live copy"
 else
-  HEALTH_JSON="$(cd "$LIVE" && timeout 20 "$PY" -m airlock.health 2>/dev/null)"
+  HEALTH_JSON="$(cd "$LIVE" && airlock_timeout 20 "$PY" -m airlock.health 2>/dev/null)"
   HEALTH_RC=$?
   if [ -z "$HEALTH_JSON" ]; then
     fail "health check produced no output (exit $HEALTH_RC)"
@@ -528,7 +530,7 @@ else
     '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"doctor","version":"0"}}}' \
     '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
     '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-    | JEV_BROWSE_PREWARM=0 timeout 30 "$PY" "$BROWSE_SERVER" 2>/dev/null)"
+    | JEV_BROWSE_PREWARM=0 airlock_timeout 30 "$PY" "$BROWSE_SERVER" 2>/dev/null)"
   if printf '%s' "$BROWSE_OUT" | grep -q '"serverInfo"' \
      && printf '%s' "$BROWSE_OUT" | grep -q '"name": "browse"'; then
     pass "browse: server answered initialize and tools/list over stdio (tool: browse)"

@@ -46,8 +46,9 @@ DEFAULT_BUDGET_MS = 1500
 # exceeding the POSIX 1500ms budget and fail-opening (see
 # docs/measurements.md). The owner's call is 2000ms on Windows so that
 # variance does not routinely eat the budget and silently disable
-# enforcement; POSIX, WSL and macOS keep 1500ms, where the daemon is
-# available and the measured latency is far below it.
+# enforcement. POSIX and WSL keep 1500ms, where the daemon is available and
+# the measured latency is far below it. macOS keeps 1500ms too: it has no
+# daemon yet, but its direct calls measured far below the budget as well.
 WINDOWS_DEFAULT_BUDGET_MS = 2000
 
 LOOP_WINDOW_S = 600  # 10 minutes, per the brief
@@ -77,8 +78,9 @@ def budget_ms(windows=None):
     """The hard budget for one client.ask() call, in milliseconds.
 
     Default is platform-dependent: 2000ms on native Windows (no warm daemon,
-    every call is a fresh HTTPS connection), 1500ms everywhere else (POSIX,
-    WSL, macOS -- all have the daemon). AIRLOCK_BUDGET_MS and its legacy
+    every call is a fresh HTTPS connection), 1500ms everywhere else (POSIX
+    and WSL, which have the daemon, and macOS, whose direct calls measured
+    far below it). AIRLOCK_BUDGET_MS and its legacy
     names (PLUMBLINE_BUDGET_MS, JEV_GUARD_BUDGET_MS) override the default on
     every platform, exactly as before this default became platform-aware.
 

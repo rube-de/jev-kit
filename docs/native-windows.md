@@ -94,8 +94,8 @@ directory under the Windows `%TEMP%` and removed afterwards.
   max **1359 ms**. **One** of the 32 died on a TLS handshake timeout
   (`_ssl.c:989: The handshake operation timed out`) and **fail-opened**, a
   3.1% fail-open rate, against the Linux-tuned 1500 ms budget. Windows has no
-  warm daemon, so every judgement pays a fresh TLS handshake, unlike POSIX,
-  WSL and macOS, which keep 1500 ms because the daemon is there. The owner's
+  warm daemon, so every judgement pays a fresh TLS handshake, unlike POSIX
+  and WSL, which keep 1500 ms because the daemon is there. The owner's
   decision is a Windows-specific default of **2000 ms**
   (`airlock/enforce.py:WINDOWS_DEFAULT_BUDGET_MS`, selected by
   `platform_compat.is_windows()`): it trades a slower worst case for fewer
@@ -103,7 +103,9 @@ directory under the Windows `%TEMP%` and removed afterwards.
   leaves 3 s of headroom under the 5 s PreToolUse hook timeout wired in
   `settings.json`. `AIRLOCK_BUDGET_MS` (and its legacy names) still overrides
   this on every platform, exactly as before.
-- **macOS is still untested**, and its row in the README is unchanged.
+- **macOS was tested on 2026-10-20** and keeps 1500 ms. It has no daemon
+  either, but its direct calls measured a median 317 ms and a max 716 ms. See
+  [measurements.md](measurements.md#on-macos-with-and-without-the-daemon).
 
 ## One number worth knowing before you measure anything there
 
