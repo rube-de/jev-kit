@@ -21,6 +21,8 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/portable.sh"
 
 # Machine-specific values live in install/config.env (gitignored). Nothing in
 # this repository hard-codes a home directory or an account name.
@@ -487,7 +489,7 @@ if [ "$WANT_GUARD" = "1" ]; then
     warn "  first install but means a git operation here changes what is live."
     mkdir -p "$AIRLOCK_HOME"
     ln -sfn "$REPO_ROOT" "$AIRLOCK_HOME/.current.tmp.$$"
-    mv -T "$AIRLOCK_HOME/.current.tmp.$$" "$AIRLOCK_HOME/current"
+    airlock_rename "$AIRLOCK_HOME/.current.tmp.$$" "$AIRLOCK_HOME/current"
     ok "current -> $REPO_ROOT"
   fi
 

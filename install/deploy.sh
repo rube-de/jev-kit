@@ -16,6 +16,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/portable.sh"
 
 # The MAIN checkout is always the first entry `git worktree list` reports,
 # regardless of which worktree this script is invoked from -- same trick
@@ -96,7 +98,7 @@ fi
 # or half-written by a concurrently running hook/daemon. -----------------
 TMP_LINK="$AIRLOCK_HOME/.current.tmp.$$"
 ln -sfn "$RELEASE_DIR" "$TMP_LINK"
-mv -T "$TMP_LINK" "$AIRLOCK_HOME/current"
+airlock_rename "$TMP_LINK" "$AIRLOCK_HOME/current"
 
 echo "deploy.sh: current -> $RELEASE_DIR" >&2
 
@@ -106,7 +108,10 @@ echo "deploy.sh: current -> $RELEASE_DIR" >&2
 CURRENT_REAL="$(readlink -f "$AIRLOCK_HOME/current")"
 # ls -t for newest-first by mtime; release names are short SHAs.
 # shellcheck disable=SC2010
-mapfile -t ALL_RELEASES < <(ls -1t "$RELEASES_DIR" 2>/dev/null | grep -v '^\.export-')
+# A read loop rather than mapfile, which bash 3.2 (macOS) does not have.
+ALL_RELEASES=()
+while IFS= read -r name; do ALL_RELEASES+=("$name"); done \
+  < <(ls -1t "$RELEASES_DIR" 2>/dev/null | grep -v '^\.export-')
 if [ "${#ALL_RELEASES[@]}" -gt "$KEEP_RELEASES" ]; then
   for old in "${ALL_RELEASES[@]:$KEEP_RELEASES}"; do
     old_path="$RELEASES_DIR/$old"

@@ -11,6 +11,8 @@ UPSTREAM_URL="https://github.com/valentynkit/jev-belay"
 UPSTREAM_COMMIT="98f39e0"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/../install/portable.sh"
 BELAY_HOME="${AIRLOCK_BELAY_DIR:-$HOME/.local/share/jev-belay}"
 BIN_DIR="$HOME/bin"
 WRAPPER="$BIN_DIR/airlock-belay-run"
@@ -68,7 +70,7 @@ rm -rf "$TMP_CLONE" 2>/dev/null || true
 # --- flip current atomically -------------------------------------------------
 mkdir -p "$BELAY_HOME"
 ln -sfn "$RELEASE_DIR" "$BELAY_HOME/.current.tmp.$$"
-mv -T "$BELAY_HOME/.current.tmp.$$" "$BELAY_HOME/current"
+airlock_rename "$BELAY_HOME/.current.tmp.$$" "$BELAY_HOME/current"
 echo "belay: current -> $RELEASE_DIR"
 
 # --- the wrapper -------------------------------------------------------------
