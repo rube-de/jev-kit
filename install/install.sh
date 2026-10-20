@@ -579,8 +579,10 @@ EOF
     WIRE_EXTRA_FLAGS=()
     [ "$WANT_BELAY" = "1" ] && WIRE_EXTRA_FLAGS+=("--belay")
     [ "$WANT_SESSION_CHECK" = "1" ] || WIRE_EXTRA_FLAGS+=("--no-session-check")
+    # The ${x[@]+...} form: under set -u, bash 3.2 (macOS) calls an empty
+    # array unbound.
     AIRLOCK_HOME="$AIRLOCK_HOME" JEV_HOME="$AIRLOCK_HOME" AIRLOCK_PYTHON3="$PY" \
-      "$SCRIPT_DIR/wire.sh" --apply "${WIRE_EXTRA_FLAGS[@]}" "${WIRE_FILES[@]}"
+      "$SCRIPT_DIR/wire.sh" --apply ${WIRE_EXTRA_FLAGS[@]+"${WIRE_EXTRA_FLAGS[@]}"} "${WIRE_FILES[@]}"
   else
     echo "   No --wire given, so no settings.json was touched. To preview an edit"
     echo "   to an existing entry:"
