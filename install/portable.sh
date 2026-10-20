@@ -10,8 +10,13 @@
 # Rename $1 to $2. When $2 is a symlink to a directory, the link itself is
 # replaced; $1 is never moved into the directory the link points at. GNU mv
 # spells that -T and BSD mv spells it -h. It is still a single rename(2), so
-# swapping `current` stays atomic.
+# swapping `current` stays atomic. Ask mv which one it is rather than the OS:
+# a Mac with Homebrew's GNU coreutils first in PATH has a GNU mv.
 airlock_rename() {
+  if mv --version >/dev/null 2>&1; then
+    mv -T "$1" "$2"
+    return
+  fi
   case "$(uname -s)" in
     Darwin|*BSD) mv -h "$1" "$2" ;;
     *) mv -T "$1" "$2" ;;

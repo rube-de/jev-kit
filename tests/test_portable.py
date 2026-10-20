@@ -44,7 +44,9 @@ class TestRename(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.dir = os.path.realpath(self.tmp.name)
 
-    def test_a_link_to_a_directory_is_replaced_not_entered(self):
+    def swap_current(self, env=None):
+        """Point `current` at a new release the way deploy.sh does, and
+        check the link itself was replaced."""
         old = os.path.join(self.dir, "old-release")
         new = os.path.join(self.dir, "new-release")
         os.makedirs(old)
@@ -54,13 +56,35 @@ class TestRename(unittest.TestCase):
         tmp_link = os.path.join(self.dir, ".current.tmp")
         os.symlink(new, tmp_link)
 
-        proc = run('airlock_rename "%s" "%s"; echo "rc=$?"' % (tmp_link, current))
+        proc = run('airlock_rename "%s" "%s"; echo "rc=$?"' % (tmp_link, current), env)
 
         self.assertIn("rc=0", proc.stdout, proc.stderr)
         self.assertEqual(os.path.realpath(current), new)
         self.assertFalse(os.path.lexists(tmp_link))
         # A plain mv would have put the link inside the old release.
         self.assertEqual(os.listdir(old), [])
+
+    def test_a_link_to_a_directory_is_replaced_not_entered(self):
+        self.swap_current()
+
+    def test_a_gnu_mv_on_a_mac_still_gets_its_own_flag(self):
+        # Homebrew's coreutils put a GNU mv first in PATH on a Mac, and GNU
+        # mv has no -h. Fake the Mac with a uname that says Darwin.
+        gnu_mv = None
+        for candidate in (shutil.which("gmv"), shutil.which("mv")):
+            if candidate and subprocess.run([candidate, "--version"],
+                                            capture_output=True).returncode == 0:
+                gnu_mv = candidate
+                break
+        if not gnu_mv:
+            self.skipTest("no GNU mv on this machine")
+        bin_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, bin_dir)
+        os.symlink(gnu_mv, os.path.join(bin_dir, "mv"))
+        fake_uname = os.path.join(bin_dir, "uname")
+        Path(fake_uname).write_text("#!/bin/sh\necho Darwin\n")
+        os.chmod(fake_uname, 0o755)
+        self.swap_current(dict(os.environ, PATH=bin_dir + os.pathsep + os.environ["PATH"]))
 
     def test_a_directory_moves_to_a_new_name(self):
         src = os.path.join(self.dir, "plumbline")
