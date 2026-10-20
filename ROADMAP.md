@@ -9,9 +9,10 @@ and is itemised there rather than repeated.
 - **Native Windows support.** Not built, not run, itemised in
   [docs/native-windows.md](docs/native-windows.md).
   Everything (`es.exe`) file search on Windows is part of that work.
-- **macOS is untested.** The guard is stdlib Python and should run with
-  `--no-systemd`, but nobody has tried it, and the `launchd` equivalents of
-  the five systemd user units are not written.
+- **macOS has no service units.** The guard installs and runs with
+  `--no-systemd`, but the `launchd` equivalents of the five systemd user
+  units are not written. A Mac gets no warm daemon, no timers and no
+  `plocate` index.
 - **The installer and doctor are bash.** Porting both to Python would remove
   the Git Bash dependency on Windows and would suit a project whose guard is
   already stdlib Python.

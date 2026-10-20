@@ -61,6 +61,30 @@ See [native-windows.md](native-windows.md).
 The health check's own direct HTTPS probe on the same machine and the same
 session: `direct_ask {ok: true, latency_ms: 1125}`, `status=healthy`.
 
+### On macOS, with and without the daemon
+
+macOS 15.8.1 on Apple silicon with Homebrew Python 3.15, on 2026-10-20. The
+guard was installed with `install/install.sh --guard --no-systemd` into a
+throwaway `$HOME`, with a real key. Real `PreToolUse` payloads were piped at
+the installed hook, one process per call, as the CLI runs it. Each run was
+**100 judged calls**: 50 `R8-tier-guard` and 50 `R10-general-risk`. Wall time
+covers the whole hook process. Jev latency is what the guard logged.
+
+| ms | no daemon | daemon, started by hand |
+|---|---|---|
+| wall median | 317 | 275 |
+| wall p95 | 372 | 346 |
+| wall max | 716 | 564 |
+| Jev median | 262 | 223 |
+| Jev p95 | 313 | 290 |
+| fail-opens | 0 | 0 |
+
+There are no `launchd` units yet. "Started by hand" means `python3 -m
+airlock.daemon` with `XDG_RUNTIME_DIR` set. On this link a fresh connection
+cost about 40 ms at the median, far less than the round figures above. That is
+one machine on one network, so treat it as a sample. macOS keeps the 1500 ms
+budget.
+
 ## Rule accuracy
 
 `python3 -m airlock.eval`, 2026-09-19. Every deny-capable rule scored 100%
