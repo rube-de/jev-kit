@@ -767,6 +767,37 @@ class TestASymlinkOutOfHomeIsWindowsGround(unittest.TestCase):
                 policy.ES_WSL_SUGGESTION)
 
 
+
+class TestAHomeBehindASymlink(unittest.TestCase):
+    """$HOME can sit behind a symlink: /home -> /System/Volumes/Data/home on
+    macOS, or a /home moved to another disk on Linux. Roots are resolved
+    before they are classified, so comparing them with the unresolved home
+    read a search of $HOME as ground the home index does not hold."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        tmp = os.path.realpath(self.tmp.name)
+        self.outside = tmp
+        real_home = os.path.join(tmp, "data", "alice")
+        os.makedirs(os.path.join(real_home, "notes"))
+        self.home = os.path.join(tmp, "home-link")
+        os.symlink(real_home, self.home)
+
+    def test_a_resolved_root_under_home_is_covered(self):
+        root = policy.resolve_root(os.path.join(self.home, "notes"))
+        self.assertTrue(policy.root_is_plocate_covered(
+            root, home=self.home, db_kind="home"))
+
+    def test_an_unresolved_root_under_home_is_still_covered(self):
+        # find without -L leaves a symlinked root unresolved.
+        self.assertTrue(policy.root_is_plocate_covered(
+            os.path.join(self.home, "notes"), home=self.home, db_kind="home"))
+
+    def test_a_root_outside_home_is_still_not_covered(self):
+        self.assertFalse(policy.root_is_plocate_covered(
+            self.outside, home=self.home, db_kind="home"))
+
 class TestEsOnlyInCommandPosition(unittest.TestCase):
     """Codex P2 on PR #1: _ES_RE accepted `es` in any whitespace-delimited
     argument, so `find / -name es` read as already-indexed and suppressed the
